@@ -21,11 +21,13 @@ jobs:
 
       - name: Tag Version
         run: |
-          export VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
-          export VERSION_BITS=(${VERSION//./ })
-          export PUBLISH_TAG_VERSION_MAJOR=${VERSION_BITS[0]}
-          export PUBLISH_TAG_VERSION_MINOR=${VERSION_BITS[1]}
-          export PUBLISH_TAG_VERSION_PATCH=${VERSION_BITS[2]}
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          export VERSION=$(git tag --sort=-creatordate | grep -v main | head -n 1)
+          export VERSION_BITS=$(echo $VERSION | sed "s/v//g" | sed "s/\./ /g")
+          # TODO: This prints the wrong values
+          export PUBLISH_TAG_VERSION_MAJOR=${VERSION_BITS[1]}
+          export PUBLISH_TAG_VERSION_MINOR=${VERSION_BITS[2]}
+          export PUBLISH_TAG_VERSION_PATCH=${VERSION_BITS[3]}
 
       - name: Build
         run: make build

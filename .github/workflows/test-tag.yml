@@ -1,0 +1,23 @@
+# On PRs targetting main, ensure at least one commit is tagged with a version
+name: Test Commit Tag
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
+
+      - name: PR Has Tag
+        run: |
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+          TAG=$(git tag --sort=-creatordate | grep -v main | head -n 1)
+          if [ -z "$TAG" ]; then
+            echo "At least one commit must be tagged with a version"
+            exit 1
+          fi
