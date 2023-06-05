@@ -1,4 +1,4 @@
-# GitPod Dockerfile have non standard format for tags, we use latest and then we use our own tag
+# Gitpod Dockerfile have non standard format for tags, we use latest and then we use our own tag
 FROM gitpod/workspace-base:latest
 USER gitpod
 
@@ -8,6 +8,8 @@ ENV TRIGGER_REBUILD=1
 ARG MONGOSH_VERSION=1.8.0
 ARG MONGODB_VERSION=6.0.4
 ARG UBUNTU_VERSION=ubuntu2204
+ARG NODE_VERSION=18
+ARG PNPM_VERSION=8
 
 RUN echo "Installing MongoDB $MONGODB_VERSION and MongoSH $MONGOSH_VERSION"
 
@@ -31,3 +33,10 @@ RUN mkdir -p /tmp/mongodb && \
   rm -rf /tmp/mongodb && \
   sudo mkdir -p /data/db && \
   sudo chown gitpod:gitpod -R /data/db
+
+# from https://www.gitpod.io/docs/introduction/languages/javascript#node-versions
+RUN bash -c 'source $HOME/.nvm/nvm.sh && nvm install $NODE_VERSION \
+    && nvm use $NODE_VERSION && nvm alias default $NODE_VERSION \
+    && npm i -g pnpm@$PNPM_VERSION'
+
+RUN echo "nvm use default &>/dev/null" >> ~/.bashrc.d/51-nvm-fix
