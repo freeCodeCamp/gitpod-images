@@ -19,6 +19,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Tag Version
+        run: |
+          export VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
+          export VERSION_BITS=(${VERSION//./ })
+          export PUBLISH_TAG_VERSION_MAJOR=${VERSION_BITS[0]}
+          export PUBLISH_TAG_VERSION_MINOR=${VERSION_BITS[1]}
+          export PUBLISH_TAG_VERSION_PATCH=${VERSION_BITS[2]}
+
       - name: Build
         run: make build
 
