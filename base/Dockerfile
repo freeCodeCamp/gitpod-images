@@ -9,6 +9,7 @@ ARG MONGOSH_VERSION=1.8.0
 ARG MONGODB_VERSION=6.0.4
 ARG UBUNTU_VERSION=ubuntu2204
 ARG NODE_VERSION=18
+ARG NVM_VERSION=0.39.3
 ARG PNPM_VERSION=8
 
 RUN echo "Installing MongoDB $MONGODB_VERSION and MongoSH $MONGOSH_VERSION"
@@ -35,7 +36,9 @@ RUN mkdir -p /tmp/mongodb && \
   sudo chown gitpod:gitpod -R /data/db
 
 # from https://www.gitpod.io/docs/introduction/languages/javascript#node-versions
-RUN bash -c 'source $HOME/.nvm/nvm.sh && nvm install $NODE_VERSION \
+# install nvm
+RUN bash -c 'wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v$NVM_VERSION/install.sh | bash \
+    && source $HOME/.nvm/nvm.sh && nvm install $NODE_VERSION \
     && nvm use $NODE_VERSION && nvm alias default $NODE_VERSION \
     && npm i -g pnpm@$PNPM_VERSION'
 
