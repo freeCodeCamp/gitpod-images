@@ -5,9 +5,6 @@ on:
     branches:
       - main
 
-env:
-  COMMIT_TYPE: ${{ contains(fromJSON('["!:", "BREAKING CHANGE:"]'), github.event.head_commit.message) && 'major' || startsWith('feat', github.event.head_commit.message) && 'minor' || startsWith('fix', github.event.head_commit.message) && 'patch' }}
-
 jobs:
   commitlint:
     runs-on: ubuntu-22.04
@@ -37,14 +34,27 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Tag Version
-        run: |
-          git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-          export VERSION=$(git tag --sort=-creatordate | grep -v main | head -n 1)
-          export VERSION_BITS=$(echo $VERSION | sed "s/v//g" | sed "s/\./ /g")
-          # TODO: This prints the wrong values
-          export PUBLISH_TAG_VERSION_MAJOR=${VERSION_BITS[1]}
-          export PUBLISH_TAG_VERSION_MINOR=${VERSION_BITS[2]}
-          export PUBLISH_TAG_VERSION_PATCH=${VERSION_BITS[3]}
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+        if: ${{ contains(fromJSON('["!:", "BREAKING CHANGE:"], "patch", "minor", "major"'), github.event.head_commit.message) || !(startsWith('chore', github.event.head_commit.message) || startsWith('refactor', github.event.head_commit.message) || startsWith('docs', github.event.head_commit.message))}}
+      - run: |
+          npm i
+          # Pass HEAD commit message to `node scripts/version.js`, and store the output in NEW_VERSION
+          NEW_VERSION=$(node scripts/version.js "$COMMIT_MESSAGE")
+          echo "New version: $NEW_VERSION"
+          # Split NEW_VERSION into an array, using '.' as the delimiter
+          IFS='.' read -ra VERSION <<< "$NEW_VERSION"
+          PUBLISH_TAG_VERSION_MAJOR=${VERSION[0]}
+          PUBLISH_TAG_VERSION_MINOR=${VERSION[1]}
+          PUBLISH_TAG_VERSION_PATCH=${VERSION[2]}
+          echo "Major: $PUBLISH_TAG_VERSION_MAJOR"
+          echo "Minor: $PUBLISH_TAG_VERSION_MINOR"
+          echo "Patch: $PUBLISH_TAG_VERSION_PATCH"
+          export PUBLISH_TAG_VERSION_MAJOR PUBLISH_TAG_VERSION_MINOR PUBLISH_TAG_VERSION_PATCH
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
       - name: Build
         run: make build
