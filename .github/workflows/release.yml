@@ -1,0 +1,63 @@
+name: Build and Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
+        with:
+          fetch-depth: 0
+      - name: Validate HEAD Commit
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: |
+          npm i
+          npx commitlint --from HEAD~1 --to HEAD --verbose
+
+  build:
+    needs: commitlint
+    runs-on: ubuntu-22.04
+    # Only run the release job if the commit message suggests a release:
+    # It is assumed commits starting with "chore" | "refactor" | "docs" do not warrant a release
+    if: ${{ contains(fromJSON('["!:", "BREAKING CHANGE:", "patch", "minor", "major"]'), github.event.head_commit.message) || !(startsWith('chore', github.event.head_commit.message) || startsWith('refactor', github.event.head_commit.message) || startsWith('docs', github.event.head_commit.message)) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag Version
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: |
+          npm i
+          NEW_VERSION=$(node scripts/version.js "$COMMIT_MESSAGE")
+          echo "New version: $NEW_VERSION"
+          # Split NEW_VERSION into an array, using '.' as the delimiter
+          IFS='.' read -ra VERSION <<< "$NEW_VERSION"
+          PUBLISH_TAG_VERSION_MAJOR=${VERSION[0]}
+          PUBLISH_TAG_VERSION_MINOR=${VERSION[1]}
+          PUBLISH_TAG_VERSION_PATCH=${VERSION[2]}
+          export PUBLISH_TAG_VERSION_MAJOR PUBLISH_TAG_VERSION_MINOR PUBLISH_TAG_VERSION_PATCH
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+
+      - name: Build
+        run: make build
+
+      - name: Push
+        run: make push
