@@ -30,24 +30,27 @@ const octokit = new Octokit({
 });
 
 async function main() {
-  const baseVersions = await octokit.request(
-    "GET /orgs/freeCodeCamp/packages/container/freecodecamp/gitpod-base/versions",
-    {
-      package_type: "container",
-      package_name: "freecodecamp/gitpod-base",
-      org: "ORG",
-      headers: {
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-    }
-  );
+  // const baseVersions = await octokit.request(
+  //   "GET /orgs/freeCodeCamp/packages/container/freecodecamp/gitpod-base/versions",
+  //   {
+  //     package_type: "container",
+  //     package_name: "freecodecamp/gitpod-base",
+  //     org: "ORG",
+  //     headers: {
+  //       "X-GitHub-Api-Version": "2022-11-28",
+  //     },
+  //   }
+  // );
 
-  const latestVersion = baseVersions.data.pop();
+  // const latestVersion = baseVersions.data.pop();
+  const latestVersion = { name: "0.1.0" };
 
   const newVersion = incrementVersion(latestVersion.name);
 
   console.log(newVersion);
 }
+
+main();
 
 /**
  * Increments the given version based on the commit message passed as an argument

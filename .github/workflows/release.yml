@@ -17,11 +17,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: npx commitlint --from HEAD~1 --to HEAD --verbose
+      - run: |
+          npm i
+          npx commitlint --from HEAD~1 --to HEAD --verbose
 
   build:
     needs: commitlint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    if: ${{ contains(fromJSON('["!:", "BREAKING CHANGE:", "patch", "minor", "major"]'), github.event.head_commit.message) || !(startsWith('chore', github.event.head_commit.message) || startsWith('refactor', github.event.head_commit.message) || startsWith('docs', github.event.head_commit.message)) }}
     steps:
       - name: Checkout
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
@@ -37,10 +40,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-        if: ${{ contains(fromJSON('["!:", "BREAKING CHANGE:"], "patch", "minor", "major"'), github.event.head_commit.message) || !(startsWith('chore', github.event.head_commit.message) || startsWith('refactor', github.event.head_commit.message) || startsWith('docs', github.event.head_commit.message))}}
       - run: |
           npm i
-          # Pass HEAD commit message to `node scripts/version.js`, and store the output in NEW_VERSION
           NEW_VERSION=$(node scripts/version.js "$COMMIT_MESSAGE")
           echo "New version: $NEW_VERSION"
           # Split NEW_VERSION into an array, using '.' as the delimiter
@@ -48,9 +49,6 @@ jobs:
           PUBLISH_TAG_VERSION_MAJOR=${VERSION[0]}
           PUBLISH_TAG_VERSION_MINOR=${VERSION[1]}
           PUBLISH_TAG_VERSION_PATCH=${VERSION[2]}
-          echo "Major: $PUBLISH_TAG_VERSION_MAJOR"
-          echo "Minor: $PUBLISH_TAG_VERSION_MINOR"
-          echo "Patch: $PUBLISH_TAG_VERSION_PATCH"
           export PUBLISH_TAG_VERSION_MAJOR PUBLISH_TAG_VERSION_MINOR PUBLISH_TAG_VERSION_PATCH
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

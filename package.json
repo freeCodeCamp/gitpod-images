@@ -4,6 +4,8 @@
   "author": "freeCodeCamp",
   "license": "MIT",
   "dependencies": {
+    "@commitlint/cli": "17.6.5",
+    "@commitlint/config-conventional": "17.6.5",
     "@octokit/core": "4.2.1"
   }
 }
