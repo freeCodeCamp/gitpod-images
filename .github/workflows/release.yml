@@ -24,6 +24,8 @@ jobs:
   build:
     needs: commitlint
     runs-on: ubuntu-22.04
+    # Only run the release job if the commit message suggests a release:
+    # It is assumed commits starting with "chore" | "refactor" | "docs" do not warrant a release
     if: ${{ contains(fromJSON('["!:", "BREAKING CHANGE:", "patch", "minor", "major"]'), github.event.head_commit.message) || !(startsWith('chore', github.event.head_commit.message) || startsWith('refactor', github.event.head_commit.message) || startsWith('docs', github.event.head_commit.message)) }}
     steps:
       - name: Checkout
