@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           fetch-depth: 0
       - name: Validate HEAD Commit
@@ -29,7 +29,7 @@ jobs:
     if: ${{ contains(fromJSON('["!:", "BREAKING CHANGE:", "patch", "minor", "major"]'), github.event.head_commit.message) || !(startsWith('chore', github.event.head_commit.message) || startsWith('refactor', github.event.head_commit.message) || startsWith('docs', github.event.head_commit.message)) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
 
       - name: Login to GHCR
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
